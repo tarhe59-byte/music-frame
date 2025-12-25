@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+<meta charset="UTF-8">
+<title>عکستو چاپ کن</title>
+
+<link rel="icon" href="logo.jpg">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+@font-face{
+  font-family:MyFont;
+  src:url("font.woff2") format("woff2");
+}
+
+html,body{
+  margin:0;
+  background:#c9c9c9;
+  font-family:MyFont,sans-serif;
+}
+
+.wrapper{
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.card{
+  width:320px;
+  background:#fff;
+  border-radius:18px;
+  padding:14px;
+  box-shadow:0 14px 38px rgba(0,0,0,.17);
+  z-index:2;
+}
+
+/* VIDEO */
+.art{
+  border-radius:14px;
+  box-shadow:0 10px 22px rgba(0,0,0,.14);
+}
+
+.art video{
+  width:100%;
+  height:auto;
+  display:block;
+  max-height:75vh;
+  background:#000;
+}
+
+/* ✅ CAPTION (HALF SIZE) */
+.caption{
+  margin-top:1px;
+  padding:2px 3px;
+  font-size:12px;
+  color:#555;
+  text-align:center;
+  min-height:10px;
+}
+
+/* ✅ SPECTRUM (HALF SIZE) */
+.canvas-spectrum{
+  width:100%;
+  height:28px;
+  margin-top:2px;
+}
+
+/* SNOW */
+#snow{
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  z-index:1;
+}
+</style>
+</head>
+
+<body>
+
+<canvas id="snow"></canvas>
+
+<div class="wrapper">
+  <div class="card">
+
+    <div class="art">
+      <video src="video.mp4" controls playsinline></video>
+    </div>
+
+    <div class="caption">جان و جهانی؛ جهان با تو خوشست</div>
+
+    <!-- audio hidden -->
+    <audio id="audio" src="song.mp3"></audio>
+
+    <canvas id="spectrum" class="canvas-spectrum"></canvas>
+
+  </div>
+</div>
+
+<script>
+/* ==== AUDIO + SPECTRUM ==== */
+const audio=document.getElementById("audio");
+const canvas=document.getElementById("spectrum");
+const ctx=canvas.getContext("2d");
+
+let ac,an,src,ready=false;
+
+function initAudio(){
+  if(ready) return;
+  ac=new AudioContext();
+  an=ac.createAnalyser();
+  an.fftSize=2048;
+  src=ac.createMediaElementSource(audio);
+  src.connect(an);
+  an.connect(ac.destination);
+  ready=true;
+}
+
+function resizeSpectrum(){
+  const r=canvas.getBoundingClientRect();
+  const d=devicePixelRatio||1;
+  canvas.width=r.width*d;
+  canvas.height=r.height*d;
+  ctx.setTransform(d,0,0,d,0,0);
+}
+resizeSpectrum();
+addEventListener("resize",resizeSpectrum);
+
+const data=new Uint8Array(1024);
+
+(function draw(){
+  requestAnimationFrame(draw);
+  if(!ready) return;
+
+  an.getByteTimeDomainData(data);
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  const w=canvas.clientWidth;
+  const h=canvas.clientHeight;
+  const m=h/2;
+
+  ctx.fillStyle="rgba(255,255,255,.9)";
+  ctx.beginPath();
+  ctx.moveTo(0,m);
+  for(let i=0;i<data.length;i++){
+    const x=i/data.length*w;
+    const v=(data[i]-128)/128;
+    ctx.lineTo(x,m+v*m*0.9);
+  }
+  ctx.lineTo(w,m);
+  ctx.lineTo(w,h);
+  ctx.lineTo(0,h);
+  ctx.closePath();
+  ctx.fill();
+})();
+
+/* ==== SNOW ==== */
+const snow=document.getElementById("snow");
+const sc=snow.getContext("2d");
+
+function resizeSnow(){
+  const d=devicePixelRatio||1;
+  snow.width=innerWidth*d;
+  snow.height=innerHeight*d;
+  sc.setTransform(d,0,0,d,0,0);
+}
+resizeSnow();
+addEventListener("resize",resizeSnow);
+
+const flakes=[...Array(140)].map(()=>{
+  const r=Math.random()*2.6+.4;
+  return{
+    x:Math.random()*innerWidth,
+    y:Math.random()*innerHeight,
+    r,vy:.15+r*.35,
+    drift:.2+r*.6,
+    a:.4+Math.random()*.6,
+    ph:Math.random()*6.28
+  }
+});
+
+let op=0,tg=0,last=performance.now();
+
+(function snowDraw(t){
+  requestAnimationFrame(snowDraw);
+  const dt=t-last;last=t;
+  op+=(tg-op)*Math.min(dt/2000,1);
+  sc.clearRect(0,0,snow.width,snow.height);
+
+  flakes.forEach(f=>{
+    f.ph+=.008;
+    f.y+=f.vy;
+    f.x+=Math.sin(f.ph)*f.drift;
+    sc.globalAlpha=op*f.a;
+    sc.beginPath();
+    sc.arc(f.x,f.y,f.r,0,6.28);
+    sc.fillStyle="#eee";
+    sc.fill();
+    if(f.y>innerHeight){f.y=-10;f.x=Math.random()*innerWidth;}
+  });
+})(performance.now());
+
+document.addEventListener("click",()=>{
+  initAudio();
+  ac.resume();
+  audio.play();
+  tg=1;
+},{once:true});
+
+audio.onpause=audio.onended=()=>tg=0;
+</script>
+
+</body>
+</html>

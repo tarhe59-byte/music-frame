@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Music Frame</title>
+
+    <style>
+    body {
+      background: #faf9f7;
+      font-family: 'Poppins', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .container {
+      text-align: center;
+      background: white;
+      padding: 20px 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    }
+
+    .art-image {
+      width: 100%;
+      max-width: 350px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+    }
+
+    audio {
+      width: 100%;
+      outline: none;
+      border-radius: 20px;
+    }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+      <img src="art.jpg" alt="artwork" class="art-image" />
+      <h2>Autumn Waves</h2>
+      <audio controls>
+        <source src="song.mp3" type="audio/mpeg">
+      </audio>
+    </div>
+</body>
+</html>
